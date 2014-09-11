@@ -1,7 +1,6 @@
 #include "device.hh"
 #include "target.hh"
 #include "util.hh"
-#include <iostream>
 
 
 namespace nfc {
