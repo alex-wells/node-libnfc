@@ -1,0 +1,24 @@
+{
+  "name": "node-libnfc",
+  "version": "0.0.1",
+  "description": "",
+  "main": "app/nfc.js",
+  "dependencies": {
+    "lodash": "^2.4.1",
+    "q": "^1.0.1"
+  },
+  "devDependencies": {
+    "gyp": "^0.5.0",
+    "node-gyp": "^1.0.1"
+  },
+  "scripts": {
+    "install": "cd src && node-gyp rebuild",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.org/sphire_team/node-libnfc.git"
+  },
+  "author": "sphire",
+  "license": "Commercial"
+}
