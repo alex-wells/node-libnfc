@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "gyp": "^0.5.0",
-    "node-gyp": "^1.0.1"
+    "node-gyp": "^1.0.2"
   },
   "scripts": {
     "install": "cd src && node-gyp rebuild",
