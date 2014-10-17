@@ -12,6 +12,7 @@ namespace nfc {
     ~RdLock();
 
   private:
+    // non-copyable
     RdLock(const RdLock &other);
     RdLock &operator=(const RdLock &other);
 
@@ -26,6 +27,7 @@ namespace nfc {
     ~WrLock();
 
   private:
+    // non-copyable
     WrLock(const WrLock &other);
     WrLock &operator=(const WrLock &other);
 
