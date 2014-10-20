@@ -3,6 +3,16 @@
 
 namespace nfc {
 
+  Lock::Lock() {
+    uv_rwlock_init(&lock);
+  }
+
+
+  Lock::~Lock() {
+    uv_rwlock_destroy(&lock);
+  }
+
+
   RdLock::RdLock(uv_rwlock_t &lock_)
     : lock(lock_)
   {

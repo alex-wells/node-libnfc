@@ -1,6 +1,6 @@
 {
   "name": "node-libnfc",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "",
   "main": "app/nfc.js",
   "dependencies": {

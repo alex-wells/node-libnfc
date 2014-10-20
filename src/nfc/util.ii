@@ -1,0 +1,309 @@
+namespace nfc {
+
+  template<class S, typename T>
+  inline
+  RawObject<S, T>::RawObject(T *value_)
+    : refs(new size_t(1)), value(new T *(value_))
+  {
+  }
+
+
+  template<class S, typename T>
+  inline
+  RawObject<S, T>::~RawObject() {
+    if (!--*refs) {
+      dismiss();
+      delete refs;
+      delete value;
+    }
+  }
+
+
+  template<class S, typename T>
+  inline
+  void
+  RawObject<S, T>::swap(RawObject &other) {
+    std::swap(refs, other.refs);
+    std::swap(value, other.value);
+  }
+
+
+  template<class S, typename T>
+  inline
+  RawObject<S, T>::RawObject(const RawObject &other)
+    : refs(other.refs), value(other.value)
+  {
+    ++*refs;
+  }
+
+
+  template<class S, typename T>
+  inline
+  RawObject<S, T> &
+  RawObject<S, T>::operator=(const RawObject &other) {
+    RawObject(other).swap(*this);
+    return *this;
+  }
+
+
+  template<class S, typename T>
+  inline
+  void
+  RawObject<S, T>::dismiss() {
+    if (is_valid()) {
+      S::destroy(get());
+      *value = NULL;
+    }
+  }
+
+
+  template<class S, typename T>
+  inline
+  T *
+  RawObject<S, T>::get() {
+    assert(is_valid());
+    return *value;
+  }
+
+
+  template<class S, typename T>
+  inline
+  const T *
+  RawObject<S, T>::get() const {
+    assert(is_valid());
+    return *value;
+  }
+
+
+  template<class S, typename T>
+  inline
+  T *
+  RawObject<S, T>::operator*() {
+    return get();
+  }
+
+
+  template<class S, typename T>
+  inline
+  const T *
+  RawObject<S, T>::operator*() const {
+    return get();
+  }
+
+
+  template<class S, typename T>
+  inline
+  bool
+  RawObject<S, T>::is_valid() const {
+    return bool(*value);
+  }
+
+
+  template<class S, typename T>
+  inline
+  RawObject<S, T>::operator bool() const {
+    return is_valid();
+  }
+
+
+  template<class S, typename T>
+  inline
+  void
+  RawObject<S, T>::destroy(T *value) {
+  }
+
+
+  template<class T>
+  inline
+  void
+  ObjectWrap<T>::Prepare(v8::Handle<v8::FunctionTemplate> &tpl, v8::Local<v8::ObjectTemplate> &proto) {
+    tpl = v8::FunctionTemplate::New(T::New);
+    proto = tpl->PrototypeTemplate();
+  }
+
+
+  template<class T>
+  inline
+  void
+  ObjectWrap<T>::Install(const char name[], v8::Handle<v8::Object> &exports, v8::Local<v8::FunctionTemplate> &tpl) {
+    tpl->InstanceTemplate()->SetInternalFieldCount(1);
+    tpl->SetClassName(v8::String::NewSymbol(name));
+    T::constructor = v8::Persistent<v8::Function>::New(tpl->GetFunction());
+    exports->Set(v8::String::NewSymbol(name), T::constructor);
+  }
+
+
+  template<class T>
+  inline
+  T *
+  ObjectWrap<T>::Create(const v8::Arguments &args) {
+    if (args.Length() != 0) {
+      return NULL;
+    }
+    return new T();
+  }
+
+
+  template<class T>
+  template<typename A0>
+  inline
+  T *
+  ObjectWrap<T>::Create(const v8::Arguments &args) {
+    if (args.Length() != 1) {
+      return NULL;
+    }
+    return new T(fromExternal<A0>(args[0]));
+  }
+
+
+  template<class T>
+  template<typename A0, typename A1>
+  inline
+  T *
+  ObjectWrap<T>::Create(const v8::Arguments &args) {
+    if (args.Length() != 2) {
+      return NULL;
+    }
+    return new T(fromExternal<A0>(args[0]),
+                 fromExternal<A1>(args[1]));
+  }
+
+
+  template<class T>
+  inline
+  v8::Handle<v8::Value>
+  ObjectWrap<T>::CheckNew(v8::Handle<v8::Value> instance) {
+    return instance;
+  }
+
+
+  template<class T>
+  inline
+  T &
+  ObjectWrap<T>::Unwrap(v8::Handle<v8::Value> value) {
+    assert(value->IsObject());
+    return *node::ObjectWrap::Unwrap<T>(value.As<v8::Object>());
+  }
+
+
+  template<class T>
+  inline
+  v8::Handle<v8::Value>
+  ObjectWrap<T>::New(const v8::Arguments &args) {
+    v8::HandleScope scope;
+
+    if (!args.IsConstructCall()) {
+      std::vector<v8::Handle<v8::Value> > handles(args.Length());
+      for (int i = 0; i < args.Length(); ++i) {
+        handles[i] = args[i];
+      }
+      return scope.Close(T::constructor->NewInstance(handles.size(), handles.data()));
+    }
+
+    T *inst = T::Create(args);
+    if (!inst) {
+      return v8::ThrowException(v8::Exception::Error(v8::String::New("unable to create instance")));
+    }
+
+    inst->Wrap(args.This());
+    return scope.Close(T::CheckNew(args.This()));
+  }
+
+
+  template<class T>
+  inline
+  v8::Handle<v8::Value>
+  ObjectWrap<T>::Construct() {
+    v8::HandleScope scope;
+    const int argc = 0;
+    v8::Handle<v8::Value> argv[argc] = {
+    };
+    return scope.Close(T::constructor->NewInstance(argc, argv));
+  }
+
+
+  template<class T>
+  template<typename A0>
+  inline
+  v8::Handle<v8::Value>
+  ObjectWrap<T>::Construct(const A0 &a0) {
+    v8::HandleScope scope;
+    const int argc = 1;
+    v8::Handle<v8::Value> argv[argc] = {
+      toExternal(a0),
+    };
+    return scope.Close(T::constructor->NewInstance(argc, argv));
+  }
+
+
+  template<class T>
+  template<typename A0, typename A1>
+  inline
+  v8::Handle<v8::Value>
+  ObjectWrap<T>::Construct(const A0 &a0, const A1 &a1) {
+    v8::HandleScope scope;
+    const int argc = 2;
+    v8::Handle<v8::Value> argv[argc] = {
+      toExternal(a0),
+      toExternal(a1),
+    };
+    return scope.Close(T::constructor->NewInstance(argc, argv));
+  }
+
+
+  template<>
+  inline
+  v8::Handle<v8::Value>
+  toV8(const std::string &value) {
+    v8::HandleScope scope;
+    return scope.Close(v8::String::New(value.c_str(), value.length()));
+  }
+
+
+  template<typename T>
+  inline
+  v8::Handle<v8::Value>
+  toV8(const std::vector<T> &value) {
+    v8::HandleScope scope;
+
+    v8::Handle<v8::Array> result = v8::Array::New(value.size());
+    for (size_t i = 0; i < value.size(); ++i) {
+      result->Set(i, toV8(value[i]));
+    }
+
+    return scope.Close(result);
+  }
+
+
+  template<>
+  inline
+  std::string
+  fromV8(v8::Handle<v8::Value> value) {
+    v8::String::Utf8Value raw(value);
+    if (!*raw) {
+      return std::string();
+    }
+    return std::string(*raw, raw.length());
+  }
+
+
+  template<typename T>
+  inline
+  v8::Handle<v8::Value>
+  toExternal(const T &value) {
+    v8::HandleScope scope;
+    return scope.Close(v8::External::Wrap(new T(value)));
+  }
+
+
+  template<typename T>
+  inline
+  T
+  fromExternal(v8::Handle<v8::Value> value) {
+    T *reference = static_cast<T *>(v8::External::Unwrap(value));
+    T result(*reference);
+    delete reference;
+    return result;
+  }
+
+}
