@@ -26,6 +26,10 @@ namespace nfc {
 
     static Target *Create(const v8::Arguments &args);
     static void Initialize(v8::Handle<v8::Object> exports);
+
+    static v8::Handle<v8::Value> GetModulationType(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+    static v8::Handle<v8::Value> GetBaudRate(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+    static v8::Handle<v8::Value> GetInfo(v8::Local<v8::String> property, const v8::AccessorInfo &info);
   };
 
 }

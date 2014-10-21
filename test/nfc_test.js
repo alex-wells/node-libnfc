@@ -19,8 +19,12 @@ while (true) {
         continue
     }
     console.log('target: ' + target)
+    console.log('  modulationType:', target.modulationType)
+    console.log('  baudRate:', target.baudRate)
+    console.log('  info:', target.info)
     while (device.isPresent(target)) {
-        console.log('.')
+        process.stdout.write('.')
     }
+    process.stdout.write('\n')
     console.log('removed')
 }
