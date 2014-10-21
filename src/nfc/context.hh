@@ -26,10 +26,6 @@ namespace nfc {
   class Context:
     public nfc::ObjectWrap<Context>
   {
-    // non-copyable
-    Context(const Context &);
-    Context &operator=(const Context &);
-
   protected:
     RawContext context;
 

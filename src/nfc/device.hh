@@ -28,10 +28,17 @@ namespace nfc {
   public:
     Device(RawContext context, RawDevice device);
 
-    void close();
+    bool close();
+    bool set_idle();
 
     std::string name();
     std::string connstring();
+
+    bool set_as_initiator();
+
+    // initiator functions
+    bool poll_target(nfc_target &target);
+    bool is_present(const nfc_target &target);
 
   public:
     static v8::Handle<v8::Value> Construct(RawContext context, RawDevice device);
@@ -47,6 +54,10 @@ namespace nfc {
     static v8::Handle<v8::Value> GetConnstring(v8::Local<v8::String> property, const v8::AccessorInfo &info);
 
     static v8::Handle<v8::Value> Close(const v8::Arguments &args);
+    static v8::Handle<v8::Value> SetIdle(const v8::Arguments &args);
+
+    static v8::Handle<v8::Value> PollTarget(const v8::Arguments &args);
+    static v8::Handle<v8::Value> IsPresent(const v8::Arguments &args);
   };
 
 }

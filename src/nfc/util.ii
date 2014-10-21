@@ -126,7 +126,7 @@ namespace nfc {
   inline
   void
   ObjectWrap<T>::Install(const char name[], v8::Handle<v8::Object> &exports, v8::Local<v8::FunctionTemplate> &tpl) {
-    tpl->InstanceTemplate()->SetInternalFieldCount(1);
+    tpl->InstanceTemplate()->SetInternalFieldCount(2);
     tpl->SetClassName(v8::String::NewSymbol(name));
     T::constructor = v8::Persistent<v8::Function>::New(tpl->GetFunction());
     exports->Set(v8::String::NewSymbol(name), T::constructor);
@@ -179,15 +179,6 @@ namespace nfc {
 
   template<class T>
   inline
-  T &
-  ObjectWrap<T>::Unwrap(v8::Handle<v8::Value> value) {
-    assert(value->IsObject());
-    return *node::ObjectWrap::Unwrap<T>(value.As<v8::Object>());
-  }
-
-
-  template<class T>
-  inline
   v8::Handle<v8::Value>
   ObjectWrap<T>::New(const v8::Arguments &args) {
     v8::HandleScope scope;
@@ -206,6 +197,9 @@ namespace nfc {
     }
 
     inst->Wrap(args.This());
+    // Remember type information to check in Unwrap below.
+    args.This()->SetPointerInInternalField(1, &T::constructor);
+
     return scope.Close(T::CheckNew(args.This()));
   }
 
@@ -248,6 +242,27 @@ namespace nfc {
       toExternal(a1),
     };
     return scope.Close(T::constructor->NewInstance(argc, argv));
+  }
+
+
+  template<class T>
+  inline
+  T &
+  ObjectWrap<T>::Unwrap(v8::Handle<v8::Value> value) {
+    assert(value->IsObject());
+    v8::Handle<v8::Object> obj = value.As<v8::Object>();
+    // Check for proper object type as set up in New() above.
+    assert(obj->InternalFieldCount() == 2 && obj->GetPointerFromInternalField(1) == &T::constructor);
+    return *node::ObjectWrap::Unwrap<T>(obj);
+  }
+
+
+  template<>
+  inline
+  v8::Handle<v8::Value>
+  toV8(const bool &value) {
+    v8::HandleScope scope;
+    return scope.Close(v8::Boolean::New(value));
   }
 
 

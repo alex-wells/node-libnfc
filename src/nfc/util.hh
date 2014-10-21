@@ -53,8 +53,6 @@ namespace nfc {
 
     static v8::Handle<v8::Value> CheckNew(v8::Handle<v8::Value> instance);
 
-    static T &Unwrap(v8::Handle<v8::Value> value);
-
     static v8::Handle<v8::Value> New(const v8::Arguments &args);
 
     static v8::Handle<v8::Value> Construct();
@@ -62,6 +60,9 @@ namespace nfc {
     static v8::Handle<v8::Value> Construct(const A0 &a0);
     template<typename A0, typename A1>
     static v8::Handle<v8::Value> Construct(const A0 &a0, const A1 &a1);
+
+  public:
+    static T &Unwrap(v8::Handle<v8::Value> value);
   };
 
 
