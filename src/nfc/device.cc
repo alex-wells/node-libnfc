@@ -160,6 +160,7 @@ namespace nfc {
   }
 
 
+  // TODO: Make this asynchronous.
   v8::Handle<v8::Value>
   Device::PollTarget(const v8::Arguments &args) {
     v8::HandleScope scope;
