@@ -26,13 +26,16 @@ class Device {
         return this.device.setIdle();
     }
 
-    pollTarget(timeout) {
+    pollTarget(timeout, period=100) {
         var deferred = Q.defer()
           , promise = deferred.promise;
         if (timeout) {
             promise = promise.timeout(timeout);
         }
         var pollTarget = function () {
+            if (!promise.isPending()) {
+                return;
+            }
             this.device.pollTarget(function (error, target) {
                 if (error) {
                     deferred.reject(error);
@@ -40,8 +43,8 @@ class Device {
                 else if (target) {
                     deferred.resolve(target);
                 }
-                else if (promise.isPending()) {
-                    setTimeout(pollTarget, 100);
+                else {
+                    setTimeout(pollTarget, period);
                 }
             });
         }.bind(this);
