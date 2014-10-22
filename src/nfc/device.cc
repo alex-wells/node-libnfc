@@ -160,6 +160,12 @@ namespace nfc {
   }
 
 
+  struct Device::PollTargetData {
+    bool success;
+    nfc_target target;
+  };
+
+
   v8::Handle<v8::Value>
   Device::PollTarget(const v8::Arguments &args) {
     return AsyncRunner<Device, PollTargetData>::Schedule(RunPollTarget, AfterPollTarget, args.This(), args[0]);

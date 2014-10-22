@@ -15,7 +15,7 @@ namespace nfc {
   public:
     static RawContext initialize();
 
-    RawContext(nfc_context *context);
+    RawContext(nfc_context *context = NULL);
 
     static void destroy(nfc_context *context);
   };
@@ -47,6 +47,11 @@ namespace nfc {
     static v8::Handle<v8::Value> GetDevices(v8::Local<v8::String> property, const v8::AccessorInfo &info);
 
     static v8::Handle<v8::Value> Open(const v8::Arguments &args);
+
+  protected:
+    struct OpenData;
+    static void RunOpen(Context &instance, OpenData &data);
+    static v8::Handle<v8::Value> AfterOpen(v8::Handle<v8::Object> instance, OpenData &data);
   };
 
 }

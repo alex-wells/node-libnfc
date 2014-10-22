@@ -38,6 +38,9 @@ namespace nfc {
 
   std::vector<std::string>
   Context::devices() {
+    if (!context) {
+      return std::vector<std::string>();
+    }
     for (size_t alloc = 1;;) {
       nfc_connstring devices[alloc];
       size_t count = nfc_list_devices(*context, devices, alloc);
@@ -52,6 +55,9 @@ namespace nfc {
 
   RawDevice
   Context::open(const std::string &connstring) {
+    if (!context) {
+      return RawDevice();
+    }
     return RawDevice(nfc_open(*context, connstring.length() ? connstring.c_str() : NULL));
   }
 
@@ -98,12 +104,35 @@ namespace nfc {
   }
 
 
+  struct Context::OpenData {
+    OpenData(v8::Handle<v8::Value> connstring);
+    std::string connstring;
+    RawDevice device;
+  };
+
+
   v8::Handle<v8::Value>
   Context::Open(const v8::Arguments &args) {
+    return AsyncRunner<Context, OpenData>::Schedule(RunOpen, AfterOpen, args.This(), args[1], args[0]);
+  }
+
+
+  Context::OpenData::OpenData(v8::Handle<v8::Value> connstring_)
+    : connstring(connstring_->BooleanValue() ? fromV8<std::string>(connstring_) : "")
+  {
+  }
+
+
+  void
+  Context::RunOpen(Context &instance, OpenData &data) {
+    data.device = instance.open(data.connstring);
+  }
+
+
+  v8::Handle<v8::Value>
+  Context::AfterOpen(v8::Handle<v8::Object> instance, OpenData &data) {
     v8::HandleScope scope;
-    Context &context = Unwrap(args.This());
-    return scope.Close(Device::Construct(context.context,
-                                         context.open(args[0]->BooleanValue() ? fromV8<std::string>(args[0]) : "")));
+    return scope.Close(Device::Construct(Unwrap(instance).context, data.device));
   }
 
 }

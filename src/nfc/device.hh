@@ -12,7 +12,7 @@ namespace nfc {
     public RawObject<RawDevice, nfc_device>
   {
   public:
-    RawDevice(nfc_device *device);
+    RawDevice(nfc_device *device = NULL);
 
     static void destroy(nfc_device *device);
   };
@@ -60,10 +60,7 @@ namespace nfc {
     static v8::Handle<v8::Value> IsPresent(const v8::Arguments &args);
 
   protected:
-    struct PollTargetData {
-      bool success;
-      nfc_target target;
-    };
+    struct PollTargetData;
     static void RunPollTarget(Device &instance, PollTargetData &data);
     static v8::Handle<v8::Value> AfterPollTarget(v8::Handle<v8::Object> instance, PollTargetData &data);
   };

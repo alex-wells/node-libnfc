@@ -283,17 +283,23 @@ namespace nfc {
   AsyncRunner<T, D>::after_async(uv_work_t *req, int status) {
     Descriptor *desc = static_cast<Descriptor *>(req->data);
     v8::HandleScope scope;
-    v8::Handle<v8::Value> result;
+    v8::Handle<v8::Value> error = v8::Undefined();
+    v8::Handle<v8::Value> result = v8::Undefined();
     if (status) {
       // Execution was canceled or some other error occurred.
-      result = v8::Undefined();
+      error = v8::String::New("async operation was canceled");
     }
     else {
-      // Execution went according to plan, run "after" handler.
+      // Execution went according to plan, call "after" handler.
+      v8::TryCatch trycatch;
       result = (*desc->after_handler)(desc->instance, desc->data);
+      if (trycatch.HasCaught()) {
+        error = trycatch.Exception();
+        result = v8::Undefined();
+      }
     }
-    const int argc = 1;
-    v8::Handle<v8::Value> argv[argc] = {result};
+    const int argc = 2;
+    v8::Handle<v8::Value> argv[argc] = {error, result};
     node::MakeCallback(desc->instance, desc->callback, argc, argv);
     delete desc;
   }
