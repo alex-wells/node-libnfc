@@ -1,6 +1,7 @@
 #ifndef NFC_UTIL_HH
 #define NFC_UTIL_HH
 
+#include "type_traits.hh"
 #include <node.h>
 #include <string>
 #include <uv.h>
@@ -114,8 +115,18 @@ namespace nfc {
   };
 
 
+  v8::Handle<v8::Value> toV8(bool value);
+  v8::Handle<v8::Value> toV8(const std::string &value);
+
   template<typename T>
-  v8::Handle<v8::Value> toV8(const T &value);
+  v8::Handle<v8::Value> toV8(const std::vector<T> &value);
+
+  template<typename T>
+  typename enable_if<is_signed<T>::value, v8::Handle<v8::Value> >::type toV8(T value);
+
+  template<typename T>
+  typename enable_if<is_unsigned<T>::value, v8::Handle<v8::Value> >::type toV8(T value);
+
 
   template<typename T>
   T fromV8(v8::Handle<v8::Value> value);
@@ -123,6 +134,7 @@ namespace nfc {
 
   template<typename T>
   v8::Handle<v8::Value> toExternal(const T &value);
+
 
   template<typename T>
   T fromExternal(v8::Handle<v8::Value> value);

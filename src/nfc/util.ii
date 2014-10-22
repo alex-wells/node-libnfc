@@ -257,34 +257,14 @@ namespace nfc {
   }
 
 
-  template<>
   inline
   v8::Handle<v8::Value>
-  toV8(const bool &value) {
+  toV8(bool value) {
     v8::HandleScope scope;
     return scope.Close(v8::Boolean::New(value));
   }
 
 
-  template<>
-  inline
-  v8::Handle<v8::Value>
-  toV8(const size_t &value) {
-    v8::HandleScope scope;
-    return scope.Close(v8::Integer::NewFromUnsigned(value));
-  }
-
-
-  template<>
-  inline
-  v8::Handle<v8::Value>
-  toV8(const uint8_t &value) {
-    v8::HandleScope scope;
-    return scope.Close(v8::Integer::NewFromUnsigned(value));
-  }
-
-
-  template<>
   inline
   v8::Handle<v8::Value>
   toV8(const std::string &value) {
@@ -305,6 +285,24 @@ namespace nfc {
     }
 
     return scope.Close(result);
+  }
+
+
+  template<typename T>
+  inline
+  typename enable_if<is_signed<T>::value, v8::Handle<v8::Value> >::type
+  toV8(T value) {
+    v8::HandleScope scope;
+    return scope.Close(v8::Integer::New(value));
+  }
+
+
+  template<typename T>
+  inline
+  typename enable_if<is_unsigned<T>::value, v8::Handle<v8::Value> >::type
+  toV8(T value) {
+    v8::HandleScope scope;
+    return scope.Close(v8::Integer::NewFromUnsigned(value));
   }
 
 

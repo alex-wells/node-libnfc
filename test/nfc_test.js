@@ -19,9 +19,9 @@ while (true) {
         continue
     }
     console.log('target: ' + target)
-    console.log('  modulationType:', target.modulationType)
-    console.log('  baudRate:', target.baudRate)
-    console.log('  info:', target.info)
+    console.log(' modulationType:', target.modulationType)
+    console.log(' baudRate:', target.baudRate)
+    console.log(' info:', target.info)
     while (device.isPresent(target)) {
         process.stdout.write('.')
     }
