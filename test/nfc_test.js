@@ -5,30 +5,45 @@ var context = new nfc.Context()
 console.log('libnfc version: ' + context.version)
 console.log('available devices: ' + (context.devices.length ? '[' + context.devices.join(', ') + ']' : 'none'))
 
-var device = context.open()
-console.log('device name: ' + device.name)
-console.log('device connstring: ' + device.connstring)
+context.open(null, function (error, device) {
+    if (error) {
+        console.log('open: ' + error)
+        process.exit()
+    }
 
-process.on('exit', function () {
-    device.close()
-})
+    console.log('device name: ' + device.name)
+    console.log('device connstring: ' + device.connstring)
 
-pollTarget = function () {
-    device.pollTarget(function (target) {
-        if (!target) {
-            return pollTarget()
-        }
-        console.log('target: ' + target)
-        console.log(' modulationType:', target.modulationType)
-        console.log(' baudRate:', target.baudRate)
-        console.log(' info:', target.info)
-        while (device.isPresent(target)) {
-            process.stdout.write('.')
-        }
-        process.stdout.write('\n')
-        console.log('removed')
-        pollTarget()
+    process.on('exit', function () {
+        device.close()
     })
-}
 
-pollTarget()
+    pollTarget = function () {
+        device.pollTarget(function (error, target) {
+            if (error) {
+                console.log('poll: ' + error)
+                process.exit()
+            }
+
+            if (!target) {
+                return pollTarget()
+            }
+
+            console.log('target: ' + target)
+            console.log(' modulationType:', target.modulationType)
+            console.log(' baudRate:', target.baudRate)
+            console.log(' info:', target.info)
+
+            while (device.isPresent(target)) {
+                process.stdout.write('.')
+            }
+            process.stdout.write('\n')
+
+            console.log('removed')
+
+            pollTarget()
+        })
+    }
+
+    pollTarget()
+})
