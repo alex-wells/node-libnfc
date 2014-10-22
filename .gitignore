@@ -1,5 +1,6 @@
 *~
 /tmp/
+/dist/
 /src/build/
 /node_modules/
 /test/c_impl/nfc_test

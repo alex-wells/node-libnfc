@@ -2,17 +2,19 @@
   "name": "node-libnfc",
   "version": "0.1.0",
   "description": "",
-  "main": "app/nfc.js",
+  "main": "dist/nfc.js",
   "dependencies": {
     "lodash": "^2.4.1",
     "q": "^1.0.1"
   },
   "devDependencies": {
+    "gulp": "^3.8.9",
+    "gulp-es6-transpiler": "^1.0.0",
     "gyp": "^0.5.0",
     "node-gyp": "^1.0.2"
   },
   "scripts": {
-    "install": "cd src && node-gyp rebuild",
+    "install": "cd src && node-gyp rebuild && gulp",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

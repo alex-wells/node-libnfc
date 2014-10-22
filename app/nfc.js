@@ -1,52 +1,80 @@
 var nfc = require('../src/build/Release/nfc.node')
-  , _ = require('lodash')
-  , Q = require('q')
+  , Q = require('q');
 
 
-function wrap (object, wrapper) {
-    return _.extend(object, _.mapValues(wrapper, function (value, key) {
-        return _.partial(value, _.bind(object[key], object))
-    }))
-}
+var context = new nfc.Context();
 
 
-function deviceSelectPassiveTarget (fn, timeout) {
-    var device = this
-      , timer = null
-
-    if (timeout) {
-        timer = setTimeout(function () {
-            device.abortCommand()
-        }, timeout)
+class Device {
+    constructor(device) {
+        this.device = device;
     }
 
-    var deferred = Q.defer()
-    fn(function (target) {
-        if (timer) {
-            clearTimeout(timer)
-        }
-        if (target) {
-            deferred.resolve(target)
-        }
-        else {
-            deferred.reject('no target')
-        }
-    })
-    return deferred.promise
-}
-
-
-function nfcOpen (fn, connstring) {
-    var device = fn(connstring)
-    if (!device.available) {
-        throw new Error("no such device")
+    get name() {
+        return this.device.name;
     }
-    return wrap(device, {
-        selectPassiveTarget: deviceSelectPassiveTarget,
-    })
+
+    get connstring() {
+        return this.device.connstring;
+    }
+
+    close() {
+        return this.device.close();
+    }
+
+    setIdle() {
+        return this.device.setIdle();
+    }
+
+    pollTarget(timeout) {
+        var deferred = Q.defer()
+          , promise = deferred.promise;
+        if (timeout) {
+            promise = promise.timeout(timeout);
+        }
+        var pollTarget = function () {
+            this.device.pollTarget(function (error, target) {
+                if (error) {
+                    deferred.reject(error);
+                }
+                else if (target) {
+                    deferred.resolve(target);
+                }
+                else if (promise.isPending()) {
+                    setTimeout(pollTarget, 100);
+                }
+            });
+            // this.device.close();
+        }.bind(this);
+        pollTarget();
+        return promise;
+    }
+
+    isPresent(target) {
+        return this.device.isPresent(target);
+    }
+
+    toString() {
+        return '[Device: ' + this.name + ']';
+    }
 }
 
 
-module.exports = wrap(nfc, {
-    open: nfcOpen,
-})
+class NFC {
+    static get version() {
+        return context.version;
+    }
+
+    static get devices() {
+        return context.devices;
+    }
+
+    static open(connstring) {
+        return Q.ninvoke(context, 'open', connstring).then(function (device) {
+            return new Device(device);
+        });
+    }
+}
+
+
+module.exports = NFC;
