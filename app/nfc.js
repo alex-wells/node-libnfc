@@ -5,6 +5,29 @@ var nfc = require('../src/build/Release/nfc.node')
 var context = new nfc.Context();
 
 
+class Target {
+    constructor(target) {
+        this.target = target;
+    }
+
+    get modulationType() {
+        return this.target.modulationType;
+    }
+
+    get baudRate() {
+        return this.target.baudRate;
+    }
+
+    get info() {
+        return this.target.info;
+    }
+
+    toString() {
+        return '[Target: ' + this.modulationType + ' ' + this.baudRate + 'kbps' + ']';
+    }
+}
+
+
 class Device {
     constructor(device) {
         this.device = device;
@@ -49,11 +72,13 @@ class Device {
             });
         }.bind(this);
         pollTarget();
-        return promise;
+        return promise.then(function (target) {
+            return new Target(target);
+        });
     }
 
     isPresent(target) {
-        return this.device.isPresent(target);
+        return this.device.isPresent(target.target);
     }
 
     toString() {

@@ -4,8 +4,9 @@ console.log('libnfc version: ' + nfc.version);
 console.log('available devices: ' + (nfc.devices.length ? '[' + nfc.devices.join(', ') + ']' : 'none'));
 
 nfc.open().then(function (device) {
-    console.log('device name: ' + device.name);
-    console.log('device connstring: ' + device.connstring);
+    console.log('device: ' + device);
+    console.log(' name: ', device.name);
+    console.log(' connstring: ', device.connstring);
 
     process.on('exit', function () {
         device.close();
