@@ -257,6 +257,68 @@ namespace nfc {
   }
 
 
+  template<class T, typename D>
+  inline
+  AsyncRunner<T, D>::Descriptor::Descriptor(run_handler_t run_handler_, after_handler_t after_handler_,
+                                            v8::Handle<v8::Object> instance_, v8::Handle<v8::Function> callback_, const D &data_)
+    : run_handler(run_handler_), after_handler(after_handler_), instance(v8::Persistent<v8::Object>::New(instance_))
+    , callback(v8::Persistent<v8::Function>::New(callback_)), raw_instance(T::Unwrap(instance)), data(data_)
+  {
+    req.data = this;
+  }
+
+
+  template<class T, typename D>
+  inline
+  void
+  AsyncRunner<T, D>::run_async(uv_work_t *req) {
+    Descriptor *desc = static_cast<Descriptor *>(req->data);
+    (*desc->run_handler)(desc->raw_instance, desc->data);
+  }
+
+
+  template<class T, typename D>
+  inline
+  void
+  AsyncRunner<T, D>::after_async(uv_work_t *req, int status) {
+    Descriptor *desc = static_cast<Descriptor *>(req->data);
+    v8::HandleScope scope;
+    v8::Handle<v8::Value> result;
+    if (status) {
+      // Execution was canceled or some other error occurred.
+      result = v8::Undefined();
+    }
+    else {
+      // Execution went according to plan, run "after" handler.
+      result = (*desc->after_handler)(desc->instance, desc->data);
+    }
+    const int argc = 1;
+    v8::Handle<v8::Value> argv[argc] = {result};
+    node::MakeCallback(desc->instance, desc->callback, argc, argv);
+    delete desc;
+  }
+
+
+  template<class T, typename D>
+  inline
+  v8::Handle<v8::Value>
+  AsyncRunner<T, D>::Schedule(run_handler_t run_handler, after_handler_t after_handler,
+                              v8::Handle<v8::Value> instance, v8::Handle<v8::Value> callback, const D &data)
+  {
+    v8::HandleScope scope;
+    if (!instance->IsObject()) {
+      return v8::ThrowException(v8::Exception::TypeError(v8::String::New("expected instance object")));
+    }
+    if (!callback->IsFunction()) {
+      return v8::ThrowException(v8::Exception::TypeError(v8::String::New("expected callback function")));
+    }
+    Descriptor *desc = new Descriptor(run_handler, after_handler,
+                                      instance.As<v8::Object>(), callback.As<v8::Function>(), data);
+    uv_queue_work(uv_default_loop(), &desc->req, run_async, after_async);
+    return scope.Close(v8::Undefined());
+  }
+
+
   inline
   v8::Handle<v8::Value>
   toV8(bool value) {

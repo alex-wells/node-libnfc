@@ -13,18 +13,22 @@ process.on('exit', function () {
     device.close()
 })
 
-while (true) {
-    var target = device.pollTarget()
-    if (!target) {
-        continue
-    }
-    console.log('target: ' + target)
-    console.log(' modulationType:', target.modulationType)
-    console.log(' baudRate:', target.baudRate)
-    console.log(' info:', target.info)
-    while (device.isPresent(target)) {
-        process.stdout.write('.')
-    }
-    process.stdout.write('\n')
-    console.log('removed')
+pollTarget = function () {
+    device.pollTarget(function (target) {
+        if (!target) {
+            return pollTarget()
+        }
+        console.log('target: ' + target)
+        console.log(' modulationType:', target.modulationType)
+        console.log(' baudRate:', target.baudRate)
+        console.log(' info:', target.info)
+        while (device.isPresent(target)) {
+            process.stdout.write('.')
+        }
+        process.stdout.write('\n')
+        console.log('removed')
+        pollTarget()
+    })
 }
+
+pollTarget()

@@ -58,6 +58,14 @@ namespace nfc {
 
     static v8::Handle<v8::Value> PollTarget(const v8::Arguments &args);
     static v8::Handle<v8::Value> IsPresent(const v8::Arguments &args);
+
+  protected:
+    struct PollTargetData {
+      bool success;
+      nfc_target target;
+    };
+    static void RunPollTarget(Device &instance, PollTargetData &data);
+    static v8::Handle<v8::Value> AfterPollTarget(v8::Handle<v8::Object> instance, PollTargetData &data);
   };
 
 }

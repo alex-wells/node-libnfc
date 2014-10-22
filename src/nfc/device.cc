@@ -160,12 +160,9 @@ namespace nfc {
   }
 
 
-  // TODO: Make this asynchronous.
   v8::Handle<v8::Value>
   Device::PollTarget(const v8::Arguments &args) {
-    v8::HandleScope scope;
-    nfc_target target;
-    return scope.Close(Unwrap(args.This()).poll_target(target) ? Target::Construct(target) : toV8(false));
+    return AsyncRunner<Device, PollTargetData>::Schedule(RunPollTarget, AfterPollTarget, args.This(), args[0]);
   }
 
 
@@ -173,6 +170,19 @@ namespace nfc {
   Device::IsPresent(const v8::Arguments &args) {
     v8::HandleScope scope;
     return scope.Close(toV8(Unwrap(args.This()).is_present(Target::Unwrap(args[0]).target)));
+  }
+
+
+  void
+  Device::RunPollTarget(Device &instance, PollTargetData &data) {
+    data.success = instance.poll_target(data.target);
+  }
+
+
+  v8::Handle<v8::Value>
+  Device::AfterPollTarget(v8::Handle<v8::Object> instance, PollTargetData &data) {
+    v8::HandleScope scope;
+    return scope.Close(data.success ? Target::Construct(data.target) : toV8(false));
   }
 
 }

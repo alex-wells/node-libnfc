@@ -67,6 +67,33 @@ namespace nfc {
   };
 
 
+  template<class T, typename D>
+  class AsyncRunner {
+  protected:
+    typedef void (*run_handler_t)(T &instance, D &data);
+    typedef v8::Handle<v8::Value> (*after_handler_t)(v8::Handle<v8::Object> instance, D &data);
+
+    struct Descriptor {
+      Descriptor(run_handler_t run_handler, after_handler_t after_handler,
+                 v8::Handle<v8::Object> instance, v8::Handle<v8::Function> callback, const D &data);
+      uv_work_t req;
+      run_handler_t run_handler;
+      after_handler_t after_handler;
+      v8::Persistent<v8::Object> instance;
+      v8::Persistent<v8::Function> callback;
+      T &raw_instance;
+      D data;
+    };
+
+    static void run_async(uv_work_t *req);
+    static void after_async(uv_work_t *req, int status);
+
+  public:
+    static v8::Handle<v8::Value> Schedule(run_handler_t run_handler, after_handler_t after_handler,
+                                          v8::Handle<v8::Value> instance, v8::Handle<v8::Value> callback, const D &data = D());
+  };
+
+
   class Lock {
   public:
     Lock();
