@@ -300,10 +300,10 @@ namespace nfc {
     }
     else {
       // Execution went according to plan, call "after" handler.
-      v8::TryCatch trycatch;
+      v8::TryCatch try_catch;
       result = (*desc->after_handler)(desc->instance, desc->data);
-      if (trycatch.HasCaught()) {
-        error = trycatch.Exception();
+      if (try_catch.HasCaught()) {
+        error = try_catch.Exception();
         result = v8::Undefined();
       }
     }
