@@ -38,12 +38,13 @@ namespace nfc {
 
   std::vector<std::string>
   Context::devices() {
+    nfc_context *context = this->context.get();
     if (!context) {
       return std::vector<std::string>();
     }
     for (size_t alloc = 1;;) {
       nfc_connstring devices[alloc];
-      size_t count = nfc_list_devices(*context, devices, alloc);
+      size_t count = nfc_list_devices(context, devices, alloc);
       if (count <= alloc) {
         // We were able to get all devices.
         return std::vector<std::string>(devices, devices + count);
@@ -55,10 +56,11 @@ namespace nfc {
 
   RawDevice
   Context::open(const std::string &connstring) {
+    nfc_context *context = this->context.get();
     if (!context) {
       return RawDevice();
     }
-    return RawDevice(nfc_open(*context, connstring.length() ? connstring.c_str() : NULL));
+    return RawDevice(nfc_open(context, connstring.length() ? connstring.c_str() : NULL));
   }
 
 
@@ -83,7 +85,7 @@ namespace nfc {
 
   v8::Handle<v8::Value>
   Context::CheckNew(v8::Handle<v8::Value> instance) {
-    if (!Unwrap(instance).context) {
+    if (!*Unwrap(instance).context) {
       return v8::ThrowException(v8::Exception::Error(v8::String::New("unable to initialize libnfc")));
     }
     return instance;

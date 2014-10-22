@@ -13,8 +13,8 @@ namespace nfc {
   }
 
 
-  RdLock::RdLock(uv_rwlock_t &lock_)
-    : lock(lock_)
+  RdLock::RdLock(const Lock &lock_)
+    : lock(lock_.lock)
   {
     uv_rwlock_rdlock(&lock);
   }
@@ -25,8 +25,8 @@ namespace nfc {
   }
 
 
-  WrLock::WrLock(uv_rwlock_t &lock_)
-    : lock(lock_)
+  WrLock::WrLock(const Lock &lock_)
+    : lock(lock_.lock)
   {
     uv_rwlock_wrlock(&lock);
   }

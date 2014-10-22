@@ -44,7 +44,6 @@ class Device {
                     setTimeout(pollTarget, 100);
                 }
             });
-            // this.device.close();
         }.bind(this);
         pollTarget();
         return promise;

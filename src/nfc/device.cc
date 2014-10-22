@@ -28,10 +28,9 @@ namespace nfc {
 
   bool
   Device::close() {
-    if (!device) {
+    if (!device.dismiss()) {
       return false;
     }
-    device.dismiss();
     context = NULL;
     return true;
   }
@@ -39,30 +38,35 @@ namespace nfc {
 
   bool
   Device::set_idle() {
-    return device && !nfc_idle(*device);
+    nfc_device *device = this->device.get();
+    return device && !nfc_idle(device);
   }
 
 
   std::string
   Device::name() {
-    return device ? nfc_device_get_name(*device) : "";
+    nfc_device *device = this->device.get();
+    return device ? nfc_device_get_name(device) : "";
   }
 
 
   std::string
   Device::connstring() {
-    return device ? nfc_device_get_connstring(*device) : "";
+    nfc_device *device = this->device.get();
+    return device ? nfc_device_get_connstring(device) : "";
   }
 
 
   bool
   Device::set_as_initiator() {
-    return device && !nfc_initiator_init(*device);
+    nfc_device *device = this->device.get();
+    return device && !nfc_initiator_init(device);
   }
 
 
   bool
   Device::poll_target(nfc_target &target) {
+    nfc_device *device = this->device.get();
     if (!device) {
       return false;
     }
@@ -76,7 +80,7 @@ namespace nfc {
     const size_t modulations_count = sizeof(modulations) / sizeof(modulations[0]);
     const uint8_t poll_period = 2;  // polling period (in units of 150 ms)
     const uint8_t poll_count = 2;  // number of polling attempts
-    int result = nfc_initiator_poll_target(*device, modulations, modulations_count,
+    int result = nfc_initiator_poll_target(device, modulations, modulations_count,
                                            poll_count, poll_period, &target);
     return result > 0;
   }
@@ -84,7 +88,8 @@ namespace nfc {
 
   bool
   Device::is_present(const nfc_target &target) {
-    return device && !nfc_initiator_target_is_present(*device, &target);
+    nfc_device *device = this->device.get();
+    return device && !nfc_initiator_target_is_present(device, &target);
   }
 
 
@@ -125,7 +130,7 @@ namespace nfc {
 
   v8::Handle<v8::Value>
   Device::CheckNew(v8::Handle<v8::Value> instance) {
-    if (!Unwrap(instance).device) {
+    if (!*Unwrap(instance).device) {
       return v8::ThrowException(v8::Exception::Error(v8::String::New("unable to open device")));
     }
     return instance;

@@ -11,8 +11,60 @@
 namespace nfc {
 
   template<class S, typename T>
+  class RawObject;
+
+
+  class Lock {
+    friend class RdLock;
+    friend class WrLock;
+
+    mutable uv_rwlock_t lock;
+
+  public:
+    Lock();
+    ~Lock();
+
+  private:
+    // non-copyable
+    Lock(const Lock &);
+    Lock &operator=(const Lock &);
+  };
+
+
+  class RdLock {
+    uv_rwlock_t &lock;
+
+  public:
+    RdLock(const Lock &lock);
+    ~RdLock();
+
+  private:
+    // non-copyable
+    RdLock(const RdLock &);
+    RdLock &operator=(const RdLock &);
+  };
+
+
+  class WrLock {
+    uv_rwlock_t &lock;
+
+  public:
+    WrLock(const Lock &lock);
+    ~WrLock();
+
+  private:
+    // non-copyable
+    WrLock(const WrLock &);
+    WrLock &operator=(const WrLock &);
+  };
+
+
+  template<class S, typename T>
   class RawObject {
+    Lock local_lock;
+
     size_t *refs;
+    Lock *lock;
     T **value;
 
   public:
@@ -23,15 +75,12 @@ namespace nfc {
     RawObject(const RawObject &other);
     RawObject &operator=(const RawObject &other);
 
-    void dismiss();
+    bool dismiss();
 
     T *get();
     const T *get() const;
     T *operator*();
     const T *operator*() const;
-
-    bool is_valid() const;
-    operator bool() const;
 
   protected:
     static void destroy(T *value);
@@ -91,54 +140,6 @@ namespace nfc {
   public:
     static v8::Handle<v8::Value> Schedule(run_handler_t run_handler, after_handler_t after_handler,
                                           v8::Handle<v8::Value> instance, v8::Handle<v8::Value> callback, const D &data = D());
-  };
-
-
-  class Lock {
-  public:
-    Lock();
-    ~Lock();
-
-    operator uv_rwlock_t &() { return lock; }
-    operator const uv_rwlock_t &() const { return lock; }
-
-  private:
-    // non-copyable
-    Lock(const Lock &);
-    Lock &operator=(const Lock &);
-
-  private:
-    uv_rwlock_t lock;
-  };
-
-
-  class RdLock {
-  public:
-    RdLock(uv_rwlock_t &lock);
-    ~RdLock();
-
-  private:
-    // non-copyable
-    RdLock(const RdLock &);
-    RdLock &operator=(const RdLock &);
-
-  private:
-    uv_rwlock_t &lock;
-  };
-
-
-  class WrLock {
-  public:
-    WrLock(uv_rwlock_t &lock);
-    ~WrLock();
-
-  private:
-    // non-copyable
-    WrLock(const WrLock &);
-    WrLock &operator=(const WrLock &);
-
-  private:
-    uv_rwlock_t &lock;
   };
 
 

@@ -3,7 +3,7 @@ namespace nfc {
   template<class S, typename T>
   inline
   RawObject<S, T>::RawObject(T *value_)
-    : refs(new size_t(1)), value(new T *(value_))
+    : refs(new size_t(1)), lock(new Lock()), value(new T *(value_))
   {
   }
 
@@ -11,9 +11,17 @@ namespace nfc {
   template<class S, typename T>
   inline
   RawObject<S, T>::~RawObject() {
-    if (!--*refs) {
+    bool is_last;
+    {
+      RdLock lk_1(local_lock);
+      WrLock lk_2(*lock);
+      --*refs;
+      is_last = !*refs;
+    }
+    if (is_last) {
       dismiss();
       delete refs;
+      delete lock;
       delete value;
     }
   }
@@ -23,16 +31,26 @@ namespace nfc {
   inline
   void
   RawObject<S, T>::swap(RawObject &other) {
+    if (&other == this) {
+      // nothing to do
+      return;
+    }
+    WrLock lk_1(local_lock);
+    WrLock lk_2(other.local_lock);
     std::swap(refs, other.refs);
+    std::swap(lock, other.lock);
     std::swap(value, other.value);
   }
 
 
   template<class S, typename T>
   inline
-  RawObject<S, T>::RawObject(const RawObject &other)
-    : refs(other.refs), value(other.value)
-  {
+  RawObject<S, T>::RawObject(const RawObject &other) {
+    RdLock lk_1(other.local_lock);
+    refs = other.refs;
+    lock = other.lock;
+    value = other.value;
+    WrLock lk_2(*lock);
     ++*refs;
   }
 
@@ -48,12 +66,16 @@ namespace nfc {
 
   template<class S, typename T>
   inline
-  void
+  bool
   RawObject<S, T>::dismiss() {
-    if (is_valid()) {
-      S::destroy(get());
-      *value = NULL;
+    RdLock lk_1(local_lock);
+    WrLock lk_2(*lock);
+    if (!*value) {
+      return false;
     }
+    S::destroy(*value);
+    *value = NULL;
+    return true;
   }
 
 
@@ -61,7 +83,8 @@ namespace nfc {
   inline
   T *
   RawObject<S, T>::get() {
-    assert(is_valid());
+    RdLock lk_1(local_lock);
+    RdLock lk_2(*lock);
     return *value;
   }
 
@@ -70,7 +93,8 @@ namespace nfc {
   inline
   const T *
   RawObject<S, T>::get() const {
-    assert(is_valid());
+    RdLock lk_1(local_lock);
+    RdLock lk_2(*lock);
     return *value;
   }
 
@@ -88,21 +112,6 @@ namespace nfc {
   const T *
   RawObject<S, T>::operator*() const {
     return get();
-  }
-
-
-  template<class S, typename T>
-  inline
-  bool
-  RawObject<S, T>::is_valid() const {
-    return bool(*value);
-  }
-
-
-  template<class S, typename T>
-  inline
-  RawObject<S, T>::operator bool() const {
-    return is_valid();
   }
 
 
