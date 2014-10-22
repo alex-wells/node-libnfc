@@ -1,49 +1,49 @@
-var nfc = require('../src/build/Release/nfc.node')
-console.log('nfc', nfc)
+var nfc = require('../src/build/Release/nfc.node');
+console.log('nfc', nfc);
 
-var context = new nfc.Context()
-console.log('libnfc version: ' + context.version)
-console.log('available devices: ' + (context.devices.length ? '[' + context.devices.join(', ') + ']' : 'none'))
+var context = new nfc.Context();
+console.log('libnfc version: ' + context.version);
+console.log('available devices: ' + (context.devices.length ? '[' + context.devices.join(', ') + ']' : 'none'));
 
 context.open(null, function (error, device) {
     if (error) {
-        console.log('open: ' + error)
-        process.exit()
+        console.log('open: ' + error);
+        process.exit();
     }
 
-    console.log('device name: ' + device.name)
-    console.log('device connstring: ' + device.connstring)
+    console.log('device name: ' + device.name);
+    console.log('device connstring: ' + device.connstring);
 
     process.on('exit', function () {
-        device.close()
-    })
+        device.close();
+    });
 
     pollTarget = function () {
         device.pollTarget(function (error, target) {
             if (error) {
-                console.log('poll: ' + error)
-                process.exit()
+                console.log('poll: ' + error);
+                process.exit();
             }
 
             if (!target) {
-                return pollTarget()
+                return pollTarget();
             }
 
-            console.log('target: ' + target)
-            console.log(' modulationType:', target.modulationType)
-            console.log(' baudRate:', target.baudRate)
-            console.log(' info:', target.info)
+            console.log('target: ' + target);
+            console.log(' modulationType:', target.modulationType);
+            console.log(' baudRate:', target.baudRate);
+            console.log(' info:', target.info);
 
             while (device.isPresent(target)) {
-                process.stdout.write('.')
+                process.stdout.write('.');
             }
-            process.stdout.write('\n')
+            process.stdout.write('\n');
 
-            console.log('removed')
+            console.log('removed');
 
-            pollTarget()
+            pollTarget();
         })
-    }
+    };
 
-    pollTarget()
-})
+    pollTarget();
+});
