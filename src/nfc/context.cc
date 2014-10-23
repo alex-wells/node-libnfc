@@ -75,8 +75,8 @@ namespace nfc {
     Prepare(tpl, proto);
 
     proto->SetAccessor(v8::String::NewSymbol("version"), GetVersion);
-    proto->SetAccessor(v8::String::NewSymbol("devices"), GetDevices);
 
+    proto->Set(v8::String::NewSymbol("getDevices"), v8::FunctionTemplate::New(GetDevices)->GetFunction());
     proto->Set(v8::String::NewSymbol("open"), v8::FunctionTemplate::New(Open)->GetFunction());
 
     Install("Context", exports, tpl);
@@ -99,29 +99,42 @@ namespace nfc {
   }
 
 
+  struct Context::GetDevicesData {
+    std::vector<std::string> devices;
+  };
+
+
   v8::Handle<v8::Value>
-  Context::GetDevices(v8::Local<v8::String> property, const v8::AccessorInfo &info) {
+  Context::GetDevices(const v8::Arguments &args) {
+    return AsyncRunner<Context, GetDevicesData>::Schedule(RunGetDevices, AfterGetDevices, args.This(), args[0]);
+  }
+
+
+  void
+  Context::RunGetDevices(Context &instance, GetDevicesData &data) {
+    data.devices = instance.devices();
+  }
+
+
+  v8::Handle<v8::Value>
+  Context::AfterGetDevices(v8::Handle<v8::Object> instance, GetDevicesData &data) {
     v8::HandleScope scope;
-    return scope.Close(toV8(Unwrap(info.This()).devices()));
+    return scope.Close(toV8(data.devices));
   }
 
 
   struct Context::OpenData {
-    OpenData(v8::Handle<v8::Value> connstring);
     std::string connstring;
     RawDevice device;
+
+    OpenData(v8::Handle<v8::Value> connstring_)
+      : connstring(connstring_->BooleanValue() ? fromV8<std::string>(connstring_) : "") {}
   };
 
 
   v8::Handle<v8::Value>
   Context::Open(const v8::Arguments &args) {
     return AsyncRunner<Context, OpenData>::Schedule(RunOpen, AfterOpen, args.This(), args[1], args[0]);
-  }
-
-
-  Context::OpenData::OpenData(v8::Handle<v8::Value> connstring_)
-    : connstring(connstring_->BooleanValue() ? fromV8<std::string>(connstring_) : "")
-  {
   }
 
 

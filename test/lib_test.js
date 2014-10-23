@@ -1,9 +1,10 @@
 var nfc = require('../dist/nfc');
 
 console.log('libnfc version: ' + nfc.version);
-console.log('available devices: ' + (nfc.devices.length ? '[' + nfc.devices.join(', ') + ']' : 'none'));
-
-nfc.open().then(function (device) {
+nfc.getDevices().then(function(devices) {
+    console.log('available devices: ' + (devices.length ? '[' + devices.join(', ') + ']' : 'none'));
+    return nfc.open();
+}).then(function (device) {
     console.log('device: ' + device);
     console.log(' name: ', device.name);
     console.log(' connstring: ', device.connstring);
@@ -26,10 +27,10 @@ nfc.open().then(function (device) {
             pollTarget();
         }, function (reason) {
             console.log('poll: ' + reason);
-        });
+        }).done();
     }
 
     pollTarget();
 }, function (reason) {
     console.log('open: ' + reason);
-});
+}).done();

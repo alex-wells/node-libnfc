@@ -9,6 +9,60 @@ namespace nfc {
   }
 
 
+  std::string
+  Target::modulation_type() const {
+    switch (target.nm.nmt) {
+    case NMT_ISO14443A:
+      return "iso14443a";
+    case NMT_JEWEL:
+      return "jewel";
+    case NMT_ISO14443B:
+      return "iso14443b";
+    case NMT_ISO14443BI:
+      return "iso14443bi";
+    case NMT_ISO14443B2SR:
+      return "iso14443b2sr";
+    case NMT_ISO14443B2CT:
+      return "iso14443b2ct";
+    case NMT_FELICA:
+      return "felica";
+    case NMT_DEP:
+      return "dep";
+    }
+    return std::string();
+  }
+
+
+  unsigned
+  Target::baud_rate() const {
+    switch (target.nm.nbr) {
+    case NBR_UNDEFINED:
+      return 0;
+    case NBR_106:
+      return 106;
+    case NBR_212:
+      return 212;
+    case NBR_424:
+      return 424;
+    case NBR_847:
+      return 847;
+    }
+    return 0;
+  }
+
+
+  std::string
+  Target::modulation_type_string() const {
+    return str_nfc_modulation_type(target.nm.nmt);
+  }
+
+
+  std::string
+  Target::baud_rate_string() const {
+    return str_nfc_baud_rate(target.nm.nbr);
+  }
+
+
   v8::Handle<v8::Value>
   Target::Construct(const nfc_target &target) {
     return ObjectWrap::Construct(target);
@@ -35,6 +89,9 @@ namespace nfc {
     proto->SetAccessor(v8::String::NewSymbol("baudRate"), GetBaudRate);
     proto->SetAccessor(v8::String::NewSymbol("info"), GetInfo);
 
+    proto->SetAccessor(v8::String::NewSymbol("modulationTypeString"), GetModulationTypeString);
+    proto->SetAccessor(v8::String::NewSymbol("baudRateString"), GetBaudRateString);
+
     Install("Target", exports, tpl);
   }
 
@@ -42,46 +99,14 @@ namespace nfc {
   v8::Handle<v8::Value>
   Target::GetModulationType(v8::Local<v8::String> property, const v8::AccessorInfo &info) {
     v8::HandleScope scope;
-    const nfc_target &target = Unwrap(info.This()).target;
-    switch (target.nm.nmt) {
-    case NMT_ISO14443A:
-      return scope.Close(v8::String::NewSymbol("iso14443a"));
-    case NMT_JEWEL:
-      return scope.Close(v8::String::NewSymbol("jewel"));
-    case NMT_ISO14443B:
-      return scope.Close(v8::String::NewSymbol("iso14443b"));
-    case NMT_ISO14443BI:
-      return scope.Close(v8::String::NewSymbol("iso14443bi"));
-    case NMT_ISO14443B2SR:
-      return scope.Close(v8::String::NewSymbol("iso14443b2sr"));
-    case NMT_ISO14443B2CT:
-      return scope.Close(v8::String::NewSymbol("iso14443b2ct"));
-    case NMT_FELICA:
-      return scope.Close(v8::String::NewSymbol("felica"));
-    case NMT_DEP:
-      return scope.Close(v8::String::NewSymbol("dep"));
-    default:
-      return scope.Close(v8::Undefined());
-    }
+    return scope.Close(toV8(Unwrap(info.This()).modulation_type()));
   }
 
 
   v8::Handle<v8::Value>
   Target::GetBaudRate(v8::Local<v8::String> property, const v8::AccessorInfo &info) {
     v8::HandleScope scope;
-    const nfc_target &target = Unwrap(info.This()).target;
-    switch (target.nm.nbr) {
-    case NBR_106:
-      return scope.Close(toV8(106));
-    case NBR_212:
-      return scope.Close(toV8(212));
-    case NBR_424:
-      return scope.Close(toV8(424));
-    case NBR_847:
-      return scope.Close(toV8(847));
-    default:
-      return scope.Close(v8::Undefined());
-    }
+    return scope.Close(toV8(Unwrap(info.This()).baud_rate()));
   }
 
 
@@ -168,6 +193,20 @@ namespace nfc {
       return scope.Close(v8::Undefined());
     }
     return scope.Close(result);
+  }
+
+
+  v8::Handle<v8::Value>
+  Target::GetModulationTypeString(v8::Local<v8::String> property, const v8::AccessorInfo &info) {
+    v8::HandleScope scope;
+    return scope.Close(toV8(Unwrap(info.This()).modulation_type_string()));
+  }
+
+
+  v8::Handle<v8::Value>
+  Target::GetBaudRateString(v8::Local<v8::String> property, const v8::AccessorInfo &info) {
+    v8::HandleScope scope;
+    return scope.Close(toV8(Unwrap(info.This()).baud_rate_string()));
   }
 
 }

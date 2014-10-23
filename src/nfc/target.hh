@@ -18,6 +18,12 @@ namespace nfc {
   public:
     Target(const nfc_target &target);
 
+    std::string modulation_type() const;
+    unsigned baud_rate() const;
+
+    std::string modulation_type_string() const;
+    std::string baud_rate_string() const;
+
   public:
     static v8::Handle<v8::Value> Construct(const nfc_target &target);
 
@@ -30,6 +36,9 @@ namespace nfc {
     static v8::Handle<v8::Value> GetModulationType(v8::Local<v8::String> property, const v8::AccessorInfo &info);
     static v8::Handle<v8::Value> GetBaudRate(v8::Local<v8::String> property, const v8::AccessorInfo &info);
     static v8::Handle<v8::Value> GetInfo(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+
+    static v8::Handle<v8::Value> GetModulationTypeString(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+    static v8::Handle<v8::Value> GetBaudRateString(v8::Local<v8::String> property, const v8::AccessorInfo &info);
   };
 
 }

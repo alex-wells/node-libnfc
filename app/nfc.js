@@ -23,7 +23,7 @@ class Target {
     }
 
     toString() {
-        return '[Target: ' + this.modulationType + ' ' + this.baudRate + 'kbps' + ']';
+        return '[Device: ' + this.target.modulationTypeString + ' ' + this.target.baudRateString + ']';
     }
 }
 
@@ -92,8 +92,8 @@ class NFC {
         return context.version;
     }
 
-    static get devices() {
-        return context.devices;
+    static getDevices() {
+        return Q.ninvoke(context, 'getDevices');
     }
 
     static open(connstring) {
