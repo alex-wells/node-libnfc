@@ -37,7 +37,7 @@ namespace nfc {
     bool set_as_initiator();
 
     // initiator functions
-    bool poll_target(nfc_target &target);
+    int poll_target(nfc_target &target);
     bool is_present(const nfc_target &target);
 
   public:

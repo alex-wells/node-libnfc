@@ -64,11 +64,11 @@ namespace nfc {
   }
 
 
-  bool
+  int
   Device::poll_target(nfc_target &target) {
     nfc_device *device = this->device.get();
     if (!device) {
-      return false;
+      return NFC_EIO;
     }
     const nfc_modulation modulations[] = {
       {.nmt = NMT_ISO14443A, .nbr = NBR_106},
@@ -82,7 +82,7 @@ namespace nfc {
     const uint8_t poll_count = 2;  // number of polling attempts
     int result = nfc_initiator_poll_target(device, modulations, modulations_count,
                                            poll_count, poll_period, &target);
-    return result > 0;
+    return result < 0 ? result : (result ? 1 : 0);
   }
 
 
@@ -166,7 +166,8 @@ namespace nfc {
 
 
   struct Device::PollTargetData {
-    bool success;
+    bool error;
+    bool got_target;
     nfc_target target;
   };
 
@@ -177,23 +178,28 @@ namespace nfc {
   }
 
 
-  v8::Handle<v8::Value>
-  Device::IsPresent(const v8::Arguments &args) {
-    v8::HandleScope scope;
-    return scope.Close(toV8(Unwrap(args.This()).is_present(Target::Unwrap(args[0]).target)));
-  }
-
-
   void
   Device::RunPollTarget(Device &instance, PollTargetData &data) {
-    data.success = instance.poll_target(data.target);
+    int result = instance.poll_target(data.target);
+    data.got_target = result > 0;
+    data.error = result < 0;
   }
 
 
   v8::Handle<v8::Value>
   Device::AfterPollTarget(v8::Handle<v8::Object> instance, PollTargetData &data) {
     v8::HandleScope scope;
-    return scope.Close(data.success ? Target::Construct(data.target) : toV8(false));
+    if (!data.error) {
+      return scope.Close(data.got_target ? Target::Construct(data.target) : toV8(false));
+    }
+    return v8::ThrowException(v8::Exception::Error(v8::String::New("unable to poll for targets")));
+  }
+
+
+  v8::Handle<v8::Value>
+  Device::IsPresent(const v8::Arguments &args) {
+    v8::HandleScope scope;
+    return scope.Close(toV8(Unwrap(args.This()).is_present(Target::Unwrap(args[0]).target)));
   }
 
 }

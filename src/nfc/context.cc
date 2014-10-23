@@ -147,6 +147,7 @@ namespace nfc {
   v8::Handle<v8::Value>
   Context::AfterOpen(v8::Handle<v8::Object> instance, OpenData &data) {
     v8::HandleScope scope;
+    // In case open fails, Device::Construct will throw the exception.
     return scope.Close(Device::Construct(Unwrap(instance).context, data.device));
   }
 
