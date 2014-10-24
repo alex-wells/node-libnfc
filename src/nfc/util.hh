@@ -143,7 +143,11 @@ namespace nfc {
   };
 
 
+  extern struct Null {} null;
+
+
   v8::Handle<v8::Value> toV8(bool value);
+  v8::Handle<v8::Value> toV8(const Null &value);
   v8::Handle<v8::Value> toV8(const std::string &value);
 
   template<typename T>

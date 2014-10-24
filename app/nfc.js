@@ -63,7 +63,7 @@ class Device {
                 if (error) {
                     deferred.reject(error);
                 }
-                else if (target) {
+                else if (target || !timeout) {
                     deferred.resolve(target);
                 }
                 else {

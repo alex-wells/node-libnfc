@@ -190,7 +190,7 @@ namespace nfc {
   Device::AfterPollTarget(v8::Handle<v8::Object> instance, PollTargetData &data) {
     v8::HandleScope scope;
     if (!data.error) {
-      return scope.Close(data.got_target ? Target::Construct(data.target) : toV8(false));
+      return scope.Close(data.got_target ? Target::Construct(data.target) : toV8(null));
     }
     return v8::ThrowException(v8::Exception::Error(v8::String::New("unable to poll for targets")));
   }

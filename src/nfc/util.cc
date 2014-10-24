@@ -36,4 +36,7 @@ namespace nfc {
     uv_rwlock_wrunlock(&lock);
   }
 
+
+  Null null;
+
 }
