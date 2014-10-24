@@ -50,31 +50,26 @@ class Device {
     }
 
     pollTarget(timeout, period=100) {
-        var deferred = Q.defer()
-          , promise = deferred.promise;
+        var pollTarget = function (device) {
+            return Q.ninvoke(device, 'pollTarget').then(function (target) {
+                if (target) {
+                    return new Target(target);
+                }
+                if (!timeout) {
+                    return null;
+                }
+                return Q.delay(period).then(function () {
+                    if (promise.isPending()) {
+                        return pollTarget(device);
+                    }
+                });
+            });
+        };
+        var promise = pollTarget(this.device);
         if (timeout) {
             promise = promise.timeout(timeout);
         }
-        var pollTarget = function () {
-            if (!promise.isPending()) {
-                return;
-            }
-            this.device.pollTarget(function (error, target) {
-                if (error) {
-                    deferred.reject(error);
-                }
-                else if (target || !timeout) {
-                    deferred.resolve(target);
-                }
-                else {
-                    setTimeout(pollTarget, period);
-                }
-            });
-        }.bind(this);
-        pollTarget();
-        return promise.then(function (target) {
-            return new Target(target);
-        });
+        return promise;
     }
 
     isPresent(target) {
