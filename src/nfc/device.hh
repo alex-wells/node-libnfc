@@ -38,7 +38,7 @@ namespace nfc {
 
     // initiator functions
     int poll_target(nfc_target &target);
-    bool is_present(const nfc_target &target);
+    int is_present(const nfc_target &target);
 
   public:
     static v8::Handle<v8::Value> Construct(RawContext context, RawDevice device);
@@ -63,6 +63,10 @@ namespace nfc {
     struct PollTargetData;
     static void RunPollTarget(Device &instance, PollTargetData &data);
     static v8::Handle<v8::Value> AfterPollTarget(v8::Handle<v8::Object> instance, PollTargetData &data);
+
+    struct GetIsPresentData;
+    static void RunGetIsPresent(Device &instance, GetIsPresentData &data);
+    static v8::Handle<v8::Value> AfterGetIsPresent(v8::Handle<v8::Object> instance, GetIsPresentData &data);
   };
 
 }

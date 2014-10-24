@@ -12,7 +12,7 @@ namespace nfc {
   {
     friend class Device;
 
-  protected:
+  public:
     nfc_target target;
 
   public:

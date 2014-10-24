@@ -86,10 +86,13 @@ namespace nfc {
   }
 
 
-  bool
+  int
   Device::is_present(const nfc_target &target) {
     nfc_device *device = this->device.get();
-    return device && !nfc_initiator_target_is_present(device, &target);
+    if (!device) {
+      return NFC_EIO;
+    }
+    return nfc_initiator_target_is_present(device, &target);
   }
 
 
@@ -196,10 +199,32 @@ namespace nfc {
   }
 
 
+  struct Device::GetIsPresentData {
+    nfc_target target;
+    bool is_present;
+
+    GetIsPresentData(v8::Handle<v8::Value> target_)
+      : target(Target::Unwrap(target_).target) {}
+  };
+
+
   v8::Handle<v8::Value>
   Device::IsPresent(const v8::Arguments &args) {
+    return AsyncRunner<Device, GetIsPresentData>::Schedule(RunGetIsPresent, AfterGetIsPresent, args.This(), args[1], args[0]);
+  }
+
+
+  void
+  Device::RunGetIsPresent(Device &instance, GetIsPresentData &data) {
+    int result = instance.is_present(data.target);
+    data.is_present = !result;
+  }
+
+
+  v8::Handle<v8::Value>
+  Device::AfterGetIsPresent(v8::Handle<v8::Object> instance, GetIsPresentData &data) {
     v8::HandleScope scope;
-    return scope.Close(toV8(Unwrap(args.This()).is_present(Target::Unwrap(args[0]).target)));
+    return scope.Close(toV8(data.is_present));
   }
 
 }

@@ -1,4 +1,5 @@
-var nfc = require('../dist/nfc');
+var nfc = require('../dist/nfc')
+  , Q = require('q');
 
 console.log('libnfc version: ' + nfc.version);
 nfc.getDevices().then(function(devices) {
@@ -19,9 +20,16 @@ nfc.getDevices().then(function(devices) {
             console.log(' modulationType:', target.modulationType);
             console.log(' baudRate:', target.baudRate);
             console.log(' info:', target.info);
-            while (device.isPresent(target)) {
-                process.stdout.write('.');
-            }
+            var checkPresence = function () {
+                return device.isPresent(target).then(function (isPresent) {
+                    if (isPresent) {
+                        process.stdout.write('.');
+                        return Q.delay(100).then(checkPresence);
+                    }
+                });
+            };
+            return checkPresence();
+        }).then(function () {
             process.stdout.write('\n');
             console.log('removed');
             pollTarget();

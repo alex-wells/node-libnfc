@@ -73,7 +73,7 @@ class Device {
     }
 
     isPresent(target) {
-        return this.device.isPresent(target.target);
+        return Q.ninvoke(this.device, 'isPresent', target.target);
     }
 
     toString() {
