@@ -39,6 +39,7 @@ namespace nfc {
     // initiator functions
     int poll_target(nfc_target &target);
     int is_present(const nfc_target &target);
+    int transceive(const std::vector<uint8_t> &transmit, std::vector<uint8_t> &receive);
 
   public:
     static v8::Handle<v8::Value> Construct(RawContext context, RawDevice device);
@@ -57,12 +58,17 @@ namespace nfc {
     static v8::Handle<v8::Value> SetIdle(const v8::Arguments &args);
 
     static v8::Handle<v8::Value> PollTarget(const v8::Arguments &args);
+    static v8::Handle<v8::Value> Transceive(const v8::Arguments &args);
     static v8::Handle<v8::Value> IsPresent(const v8::Arguments &args);
 
   protected:
     struct PollTargetData;
     static void RunPollTarget(Device &instance, PollTargetData &data);
     static v8::Handle<v8::Value> AfterPollTarget(v8::Handle<v8::Object> instance, PollTargetData &data);
+
+    struct TransceiveData;
+    static void RunTransceive(Device &instance, TransceiveData &data);
+    static v8::Handle<v8::Value> AfterTransceive(v8::Handle<v8::Object> instance, TransceiveData &data);
 
     struct GetIsPresentData;
     static void RunGetIsPresent(Device &instance, GetIsPresentData &data);

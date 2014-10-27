@@ -20,6 +20,11 @@ nfc.getDevices().then(function(devices) {
             console.log(' modulationType:', target.modulationType);
             console.log(' baudRate:', target.baudRate);
             console.log(' info:', target.info);
+            return device.transceive([0]).then(function (receiveData) {
+                console.log(' data:', receiveData);
+                return target;
+            });
+        }).then(function (target) {
             var checkPresence = function () {
                 return device.isPresent(target).then(function (isPresent) {
                     if (isPresent) {

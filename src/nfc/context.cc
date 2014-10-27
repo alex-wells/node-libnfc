@@ -128,7 +128,7 @@ namespace nfc {
     RawDevice device;
 
     OpenData(v8::Handle<v8::Value> connstring_)
-      : connstring(connstring_->BooleanValue() ? fromV8<std::string>(connstring_) : "") {}
+      : connstring(fromV8<bool>(connstring_) ? fromV8<std::string>(connstring_) : "") {}
   };
 
 

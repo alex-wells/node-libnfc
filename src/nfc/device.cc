@@ -96,6 +96,20 @@ namespace nfc {
   }
 
 
+  int
+  Device::transceive(const std::vector<uint8_t> &transmit, std::vector<uint8_t> &receive) {
+    const int timeout = -1;  // timeout in ms (-1 is default)
+    nfc_device *device = this->device.get();
+    if (!device) {
+      return NFC_EIO;
+    }
+    int result = nfc_initiator_transceive_bytes(device, transmit.data(), transmit.size(),
+                                                receive.data(), receive.size(), timeout);
+    receive.resize(result < 0 ? 0 : size_t(result));
+    return result;
+  }
+
+
   v8::Handle<v8::Value>
   Device::Construct(RawContext context, RawDevice device) {
     return ObjectWrap::Construct(context, device);
@@ -125,6 +139,7 @@ namespace nfc {
     proto->Set(v8::String::NewSymbol("setIdle"), v8::FunctionTemplate::New(SetIdle)->GetFunction());
 
     proto->Set(v8::String::NewSymbol("pollTarget"), v8::FunctionTemplate::New(PollTarget)->GetFunction());
+    proto->Set(v8::String::NewSymbol("transceive"), v8::FunctionTemplate::New(Transceive)->GetFunction());
     proto->Set(v8::String::NewSymbol("isPresent"), v8::FunctionTemplate::New(IsPresent)->GetFunction());
 
     Install("Device", exports, tpl);
@@ -177,7 +192,8 @@ namespace nfc {
 
   v8::Handle<v8::Value>
   Device::PollTarget(const v8::Arguments &args) {
-    return AsyncRunner<Device, PollTargetData>::Schedule(RunPollTarget, AfterPollTarget, args.This(), args[0]);
+    return AsyncRunner<Device, PollTargetData>::Schedule
+      (RunPollTarget, AfterPollTarget, args.This(), args[0]);
   }
 
 
@@ -199,6 +215,39 @@ namespace nfc {
   }
 
 
+  struct Device::TransceiveData {
+    std::vector<uint8_t> transmit;
+    std::vector<uint8_t> receive;
+    bool error;
+
+    TransceiveData(v8::Handle<v8::Value> transmit_, v8::Handle<v8::Value> receive_capacity_)
+      : transmit(fromV8<std::vector<uint8_t> >(transmit_)), receive(fromV8<size_t>(receive_capacity_)) {}
+  };
+
+
+  v8::Handle<v8::Value>
+  Device::Transceive(const v8::Arguments &args) {
+    return AsyncRunner<Device, TransceiveData>::Schedule
+      (RunTransceive, AfterTransceive, args.This(), args[2], TransceiveData(args[0], args[1]));
+  }
+
+
+  void
+  Device::RunTransceive(Device &instance, TransceiveData &data) {
+    data.error = instance.transceive(data.transmit, data.receive) < 0;
+  }
+
+
+  v8::Handle<v8::Value>
+  Device::AfterTransceive(v8::Handle<v8::Object> instance, TransceiveData &data) {
+    v8::HandleScope scope;
+    if (!data.error) {
+      return scope.Close(toV8(data.receive));
+    }
+    return v8::ThrowException(v8::Exception::Error(v8::String::New("unable to transceive data")));
+  }
+
+
   struct Device::GetIsPresentData {
     nfc_target target;
     bool is_present;
@@ -210,7 +259,8 @@ namespace nfc {
 
   v8::Handle<v8::Value>
   Device::IsPresent(const v8::Arguments &args) {
-    return AsyncRunner<Device, GetIsPresentData>::Schedule(RunGetIsPresent, AfterGetIsPresent, args.This(), args[1], args[0]);
+    return AsyncRunner<Device, GetIsPresentData>::Schedule
+      (RunGetIsPresent, AfterGetIsPresent, args.This(), args[1], args[0]);
   }
 
 
