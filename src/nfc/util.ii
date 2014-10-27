@@ -334,72 +334,111 @@ namespace nfc {
   }
 
 
-  inline
-  v8::Handle<v8::Value>
-  toV8(bool value) {
-    v8::HandleScope scope;
-    return scope.Close(v8::Boolean::New(value));
-  }
-
-
-  inline
-  v8::Handle<v8::Value>
-  toV8(const Null &value) {
-    v8::HandleScope scope;
-    return scope.Close(v8::Null());
-  }
-
-
-  inline
-  v8::Handle<v8::Value>
-  toV8(const std::string &value) {
-    v8::HandleScope scope;
-    return scope.Close(v8::String::New(value.c_str(), value.length()));
-  }
-
-
-  template<typename T>
-  inline
-  v8::Handle<v8::Value>
-  toV8(const std::vector<T> &value) {
-    v8::HandleScope scope;
-
-    v8::Handle<v8::Array> result = v8::Array::New(value.size());
-    for (size_t i = 0; i < value.size(); ++i) {
-      result->Set(i, toV8(value[i]));
+  template<>
+  struct Convert<Null> {
+    static v8::Handle<v8::Value> toV8(const Null &value) {
+      v8::HandleScope scope;
+      return scope.Close(v8::Null());
     }
-
-    return scope.Close(result);
-  }
-
-
-  template<typename T>
-  inline
-  typename enable_if<is_signed<T>::value, v8::Handle<v8::Value> >::type
-  toV8(T value) {
-    v8::HandleScope scope;
-    return scope.Close(v8::Integer::New(value));
-  }
-
-
-  template<typename T>
-  inline
-  typename enable_if<is_unsigned<T>::value, v8::Handle<v8::Value> >::type
-  toV8(T value) {
-    v8::HandleScope scope;
-    return scope.Close(v8::Integer::NewFromUnsigned(value));
-  }
+  };
 
 
   template<>
-  inline
-  std::string
-  fromV8(v8::Handle<v8::Value> value) {
-    v8::String::Utf8Value raw(value);
-    if (!*raw) {
-      return std::string();
+  struct Convert<bool> {
+    static bool fromV8(v8::Handle<v8::Value> value) {
+      return value->BooleanValue();
     }
-    return std::string(*raw, raw.length());
+
+    static v8::Handle<v8::Value> toV8(bool value) {
+      v8::HandleScope scope;
+      return scope.Close(v8::Boolean::New(value));
+    }
+  };
+
+
+  template<typename T>
+  struct Convert<T, typename enable_if<is_signed<T>::value>::type> {
+    static T fromV8(v8::Handle<v8::Value> value) {
+      return value->IntegerValue();
+    }
+
+    static v8::Handle<v8::Value> toV8(T value) {
+      v8::HandleScope scope;
+      return scope.Close(v8::Integer::New(value));
+    }
+  };
+
+
+  template<typename T>
+  struct Convert<T, typename enable_if<is_unsigned<T>::value>::type> {
+    static T fromV8(v8::Handle<v8::Value> value) {
+      return value->IntegerValue();
+    }
+
+    static v8::Handle<v8::Value> toV8(T value) {
+      v8::HandleScope scope;
+      return scope.Close(v8::Integer::NewFromUnsigned(value));
+    }
+  };
+
+
+  template<>
+  struct Convert<std::string> {
+    static std::string fromV8(v8::Handle<v8::Value> value) {
+      v8::String::Utf8Value raw(value);
+      if (!*raw) {
+        return std::string();
+      }
+      return std::string(*raw, raw.length());
+    }
+
+    static v8::Handle<v8::Value> toV8(const std::string &value) {
+      v8::HandleScope scope;
+      return scope.Close(v8::String::New(value.c_str(), value.length()));
+    }
+  };
+
+
+  template<typename T>
+  struct Convert<std::vector<T> > {
+    static std::vector<T> fromV8(v8::Handle<v8::Value> value) {
+      v8::HandleScope scope;
+      if (!value->IsArray()) {
+        return std::vector<T>();
+      }
+      v8::Handle<v8::Array> array = value.As<v8::Array>();
+      std::vector<T> result;
+      result.reserve(array->Length());
+      for (size_t i = 0; i < array->Length(); ++i) {
+        result.push_back(nfc::fromV8<T>(array->Get(i)));
+      }
+      return result;
+    }
+
+    static v8::Handle<v8::Value> toV8(const std::vector<T> &value) {
+      v8::HandleScope scope;
+      v8::Handle<v8::Array> result = v8::Array::New(value.size());
+      for (size_t i = 0; i < value.size(); ++i) {
+        result->Set(i, nfc::toV8<T>(value[i]));
+      }
+      return scope.Close(result);
+    }
+  };
+
+
+  template<typename T>
+  inline
+  T
+  fromV8(v8::Handle<v8::Value> value) {
+    return Convert<T>::fromV8(value);
+  }
+
+
+  template<typename T>
+  inline
+  v8::Handle<v8::Value>
+  toV8(const T &value) {
+    return Convert<T>::toV8(value);
   }
 
 
