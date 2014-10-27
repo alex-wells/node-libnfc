@@ -76,7 +76,7 @@ class Device {
         return Q.ninvoke(this.device, 'isPresent', target.target);
     }
 
-    transceive(transmit, receiveCapacity = 4096) {
+    transceive(transmit, receiveCapacity=4096) {
         return Q.ninvoke(this.device, 'transceive', transmit, receiveCapacity);
     }
 
