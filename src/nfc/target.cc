@@ -63,6 +63,19 @@ namespace nfc {
   }
 
 
+  std::string
+  Target::info_string(bool verbose) const {
+    char *buffer;
+    int result = str_nfc_target(&buffer, &target, verbose);
+    if (result < 0) {
+      return std::string();
+    }
+    std::string details(buffer, size_t(result));
+    nfc_free(buffer);
+    return details;
+  }
+
+
   v8::Handle<v8::Value>
   Target::Construct(const nfc_target &target) {
     return ObjectWrap::Construct(target);
@@ -91,6 +104,7 @@ namespace nfc {
 
     proto->SetAccessor(v8::String::NewSymbol("modulationTypeString"), GetModulationTypeString);
     proto->SetAccessor(v8::String::NewSymbol("baudRateString"), GetBaudRateString);
+    proto->SetAccessor(v8::String::NewSymbol("infoString"), GetInfoString);
 
     Install("Target", exports, tpl);
   }
@@ -207,6 +221,17 @@ namespace nfc {
   Target::GetBaudRateString(v8::Local<v8::String> property, const v8::AccessorInfo &info) {
     v8::HandleScope scope;
     return scope.Close(toV8(Unwrap(info.This()).baud_rate_string()));
+  }
+
+
+  v8::Handle<v8::Value>
+  Target::GetInfoString(v8::Local<v8::String> property, const v8::AccessorInfo &info) {
+    v8::HandleScope scope;
+    std::string details = Unwrap(info.This()).info_string(true);
+    if (details.empty()) {
+      return v8::ThrowException(v8::Exception::Error(v8::String::New("unable to get info")));
+    }
+    return scope.Close(toV8(details));
   }
 
 }
