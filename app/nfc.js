@@ -50,22 +50,23 @@ class Device {
     }
 
     pollTarget(timeout, period=100) {
-        var pollTarget = function (device) {
-            return Q.ninvoke(device, 'pollTarget').then(function (target) {
+        var promise;
+        var pollTarget = device => {
+            return Q.ninvoke(device, 'pollTarget').then(target => {
                 if (target) {
                     return new Target(target);
                 }
                 if (!timeout) {
                     return null;
                 }
-                return Q.delay(period).then(function () {
+                return Q.delay(period).then(() => {
                     if (promise.isPending()) {
                         return pollTarget(device);
                     }
                 });
             });
         };
-        var promise = pollTarget(this.device);
+        promise = pollTarget(this.device);
         if (timeout) {
             promise = promise.timeout(timeout);
         }
@@ -96,9 +97,7 @@ class NFC {
     }
 
     static open(connstring) {
-        return Q.ninvoke(context, 'open', connstring).then(function (device) {
-            return new Device(device);
-        });
+        return Q.ninvoke(context, 'open', connstring).then(device => new Device(device));
     }
 }
 
