@@ -72,10 +72,7 @@ namespace nfc {
     }
     const nfc_modulation modulations[] = {
       {.nmt = NMT_ISO14443A, .nbr = NBR_106},
-      {.nmt = NMT_ISO14443B, .nbr = NBR_106},
-      {.nmt = NMT_FELICA, .nbr = NBR_212},
-      {.nmt = NMT_FELICA, .nbr = NBR_424},
-      {.nmt = NMT_JEWEL, .nbr = NBR_106},
+      {.nmt = NMT_ISO14443B, .nbr = NBR_106}
     };
     const size_t modulations_count = sizeof(modulations) / sizeof(modulations[0]);
     const uint8_t poll_period = 2;  // polling period (in units of 150 ms)
@@ -211,7 +208,8 @@ namespace nfc {
     if (!data.error) {
       return scope.Close(data.got_target ? Target::Construct(data.target) : toV8(null));
     }
-    return v8::ThrowException(v8::Exception::Error(v8::String::New("unable to poll for targets")));
+    // no tags in field; 
+    return scope.Close(toV8(null)); //, v8::String::New("unable to poll for targets"));
   }
 
 
