@@ -75,8 +75,8 @@ namespace nfc {
       {.nmt = NMT_ISO14443B, .nbr = NBR_106}
     };
     const size_t modulations_count = sizeof(modulations) / sizeof(modulations[0]);
-    const uint8_t poll_period = 2;  // polling period (in units of 150 ms)
-    const uint8_t poll_count = 2;  // number of polling attempts
+    const uint8_t poll_period = 1;  // polling period (in units of 150 ms)
+    const uint8_t poll_count = 1;  // number of polling attempts
     int result = nfc_initiator_poll_target(device, modulations, modulations_count,
                                            poll_count, poll_period, &target);
     return result < 0 ? result : (result ? 1 : 0);
